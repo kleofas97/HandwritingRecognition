@@ -9,14 +9,11 @@ import unsupervised_line_segmentation.my_way.preprocessing.my_pairs as my_pairs
 Args = arguments.parse_args()
 input_shape = (Args.input_shape, Args.input_shape, 1)
 
-my_pairs.get_random_pair(Args.train_set_path)
-
-
 if Args.train == True:
     # prepare data
     # TODO prepare train and test data
-    train_pair, train_label = doc_make_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size)
-    val_pair, val_label = doc_make_pairs.unsupervised_loaddata(Args.validation_set_path, Args.validation_set_path)
+    train_pair, train_label = my_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size,Args.input_shape)
+    val_pair, val_label = my_pairs.unsupervised_loaddata(Args.validation_set_path, Args.validation_set_path,Args.input_shape)
     if Args.continue_from_best is True:
         assert Args.path_to_model is not None, "invalid path to model"
         model = keras.models.load_model(Args.path_to_model)

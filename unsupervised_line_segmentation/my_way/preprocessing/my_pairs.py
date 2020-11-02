@@ -24,25 +24,61 @@ def evaluate_s(p1: np.ndarray, p2: np.ndarray) -> float:
     if pixels1 != 0 and pixels2 != 0:  # TODO to remove when in get_patches size is confirmed
         s = min(pixels1, pixels2) / max(pixels1, pixels2)
         return s
+    else:
+        pass
 
 
 def get_patches(img: np.ndarray, patch_size: int) -> Tuple:
     """Generate patches from image"""
     p1_pos, p2_pos = get_position(img, patch_size)
-    # TODO check why somethimes p1 or p2 can have (0,50) size which leads to mistake in evaluate_s
+    # TODO check why sometimes p1 or p2 can have (0,50) size which leads to mistake in evaluate_s
     p1 = img[p1_pos[0]:p1_pos[0] + patch_size, p1_pos[1]:p1_pos[1] + patch_size]
     p2 = img[p2_pos[0]:p2_pos[0] + patch_size, p2_pos[1]:p2_pos[1] + patch_size]
+    if p1.shape[0] == 0:
+        pass
     return p1, p2
 
 
 def get_patches_similar_by_number_of_foreground_pixels(img: np.ndarray,
-                                                       patch_size: int):  # -> List:
-
+                                                       patch_size: int) -> Tuple:
     while True:
-        # get random coords
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         s = evaluate_s(p1, p2)
-        # TODO based on s value label the patches and return them
+        if s >= 0.99:  # This might have to be improved
+            label = 0
+            break
+        else:
+            continue
+    return p1, p2, label
+
+
+def get_patches_different_by_number_of_foreground_pixels(img: np.ndarray,
+                                                         patch_size: int) -> Tuple:
+    while True:
+        p1, p2 = get_patches(img=img, patch_size=patch_size)
+        s = evaluate_s(p1, p2)
+        if s < 0.99:  # This might have to be improved
+            label = 1
+            break
+        else:
+            continue
+    return p1, p2, label
+
+
+def get_patches_different_by_background_area(img: np.ndarray,
+                                             patch_size: int) -> Tuple:
+    margin = 10
+    while True:
+        p1, p2 = get_patches(img=img, patch_size=patch_size)
+        numPixelsPatch = patch_size ** 2
+        if cv2.countNonZero(p1) > numPixelsPatch - margin or cv2.countNonZero(
+                p2) > numPixelsPatch - margin:
+            label = 1
+            break
+        else:
+            continue
+
+    return p1, p2, label
 
 
 def get_s_list(img: np.ndarray, patch_size: int, nb_of_patches: int) -> List:
@@ -57,18 +93,33 @@ def get_random_pair(images_path, patch_size):
     images = os.listdir(images_path)
     image_name = np.random.choice(images)
     img = cv2.imread(os.path.join(images_path, image_name), 0)
-    ret, thresh = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
 
     # there are 3 possibilites on patches generation.
     # Patches Similiar by number of froeground pixels (s > 0.7)
     # Patches difrent by number of foreground pixels (s < 0.4)
     # Patches different by background area (nb of white > nb of black pixels)
 
-    # gen_func = np.random.choice([get_nearby_patches, get_backpaired_patches,
-    #                              get_nearby_patches, get_different_area_patches])
-    # p1, p2, label = gen_func(img, thresh)
-    # get_patches_similar_by_number_of_foreground_pixels(img, 150)
-    # for size in range(50,200,20):
-    #     testing(img,size)
-    # return p1, p2, label
+    gen_func = np.random.choice([get_patches_similar_by_number_of_foreground_pixels,
+                                 get_patches_different_by_number_of_foreground_pixels,
+                                 get_patches_different_by_number_of_foreground_pixels,
+                                 get_patches_different_by_background_area])
+    p1, p2, label = gen_func(img, patch_size)
+
+    return p1, p2, label
+
+
+def unsupervised_loaddata(folderName, set_size, patch_size):
+    pairs = []
+    labels = []
+    for i in range(set_size):
+        if i % 10 == 0:
+            print('Set finished in {}%'.format(100 * i / set_size))
+        p1, p2, label = get_random_pair(folderName, patch_size)
+        p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
+        p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
+        pairs += [[p1, p2]]
+        labels += [label]
+    apairs = np.array(pairs)
+    print(apairs.shape)
+    alabels = np.array(labels)
+    return apairs, alabels
