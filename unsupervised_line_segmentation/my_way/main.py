@@ -3,11 +3,15 @@ import os
 import unsupervised_line_segmentation.my_way.Arguments as arguments
 import keras
 import unsupervised_line_segmentation.my_way.preprocessing.make_pairs as doc_make_pairs
-
+import unsupervised_line_segmentation.my_way.preprocessing.my_pairs as my_pairs
 
 
 Args = arguments.parse_args()
 input_shape = (Args.input_shape, Args.input_shape, 1)
+
+my_pairs.get_random_pair(Args.train_set_path)
+
+
 if Args.train == True:
     # prepare data
     # TODO prepare train and test data
@@ -29,4 +33,3 @@ else:
     #TODO prepare way to preapre image as input
     prediction = model.predict(Args.test_img_path)
     #TODO cut images to lines for next DNN
-
