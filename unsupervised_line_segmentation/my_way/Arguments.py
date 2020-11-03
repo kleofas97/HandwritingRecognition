@@ -30,7 +30,7 @@ def parse_args() -> Arguments:
                         help='Path to the directory containing images', required=False,
                         default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\train')
     parser.add_argument('--train_set_size', dest='train_set_size', type=str,
-                        help='number of patches to be prepared', default=1000, required=False)
+                        help='number of patches to be prepared', default=30000, required=False)
     parser.add_argument('--validation_set_path', dest='validation_set_path', type=str,
                         help='Path to the directory containing images for testing', required=False,
                         default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\val')

@@ -3,14 +3,18 @@ import numpy as np
 import cv2
 from typing import List, Tuple
 import unsupervised_line_segmentation.my_way.preprocessing.pairs_testing as pair_test
+import itertools
+
+import time
 
 MARGIN = 20
+TIMEOUT = 20
 
 
 def get_position(img: np.ndarray, patch_size: int) -> Tuple:
     """Find random position for patches within acceptable location"""
-    pos = [np.random.randint(low=0 + MARGIN, high=img.shape[1] - 2 * patch_size - MARGIN),
-           np.random.randint(low=0 + MARGIN, high=img.shape[0] - patch_size - MARGIN)
+    pos = [np.random.randint(low=0 + MARGIN, high=img.shape[0] - patch_size - MARGIN),
+           np.random.randint(low=0 + MARGIN, high=img.shape[1] - 2 * patch_size - MARGIN)
            ]
     p1_pos = pos
     p2_pos = [pos[0] + patch_size, pos[1]]
@@ -21,64 +25,58 @@ def evaluate_s(p1: np.ndarray, p2: np.ndarray) -> float:
     """Based on two patches evaluate s value"""
     pixels1 = cv2.countNonZero(p1)
     pixels2 = cv2.countNonZero(p2)
-    if pixels1 != 0 and pixels2 != 0:  # TODO to remove when in get_patches size is confirmed
-        s = min(pixels1, pixels2) / max(pixels1, pixels2)
-        return s
-    else:
-        pass
+    s = min(pixels1, pixels2) / max(pixels1, pixels2)
+    return s
 
 
 def get_patches(img: np.ndarray, patch_size: int) -> Tuple:
     """Generate patches from image"""
     p1_pos, p2_pos = get_position(img, patch_size)
-    # TODO check why sometimes p1 or p2 can have (0,50) size which leads to mistake in evaluate_s
     p1 = img[p1_pos[0]:p1_pos[0] + patch_size, p1_pos[1]:p1_pos[1] + patch_size]
     p2 = img[p2_pos[0]:p2_pos[0] + patch_size, p2_pos[1]:p2_pos[1] + patch_size]
-    if p1.shape[0] == 0:
-        pass
     return p1, p2
 
 
 def get_patches_similar_by_number_of_foreground_pixels(img: np.ndarray,
                                                        patch_size: int) -> Tuple:
-    while True:
+    for _ in itertools.count():
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         s = evaluate_s(p1, p2)
         if s >= 0.99:  # This might have to be improved
             label = 0
-            break
+            return p1, p2, label
         else:
             continue
-    return p1, p2, label
 
 
 def get_patches_different_by_number_of_foreground_pixels(img: np.ndarray,
                                                          patch_size: int) -> Tuple:
-    while True:
+    for _ in itertools.count():
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         s = evaluate_s(p1, p2)
         if s < 0.99:  # This might have to be improved
             label = 1
-            break
+            return p1, p2, label
         else:
             continue
-    return p1, p2, label
 
 
 def get_patches_different_by_background_area(img: np.ndarray,
                                              patch_size: int) -> Tuple:
-    margin = 10
-    while True:
+    margin = 30
+    start = time.time()
+    for _ in itertools.count():
+        if time.time() - start >= TIMEOUT:  # in case there is lack of white space in the image, after long time switch to different function
+            p1, p2, label = get_patches_different_by_number_of_foreground_pixels(img, patch_size)
+            return p1, p2, label
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         numPixelsPatch = patch_size ** 2
         if cv2.countNonZero(p1) > numPixelsPatch - margin or cv2.countNonZero(
                 p2) > numPixelsPatch - margin:
             label = 1
-            break
+            return p1, p2, label
         else:
             continue
-
-    return p1, p2, label
 
 
 def get_s_list(img: np.ndarray, patch_size: int, nb_of_patches: int) -> List:
@@ -100,7 +98,7 @@ def get_random_pair(images_path, patch_size):
     # Patches different by background area (nb of white > nb of black pixels)
 
     gen_func = np.random.choice([get_patches_similar_by_number_of_foreground_pixels,
-                                 get_patches_different_by_number_of_foreground_pixels,
+                                 get_patches_similar_by_number_of_foreground_pixels,
                                  get_patches_different_by_number_of_foreground_pixels,
                                  get_patches_different_by_background_area])
     p1, p2, label = gen_func(img, patch_size)
@@ -111,15 +109,16 @@ def get_random_pair(images_path, patch_size):
 def unsupervised_loaddata(folderName, set_size, patch_size):
     pairs = []
     labels = []
+    percent = set_size/100
     for i in range(set_size):
-        if i % 10 == 0:
+        if i % percent  == 0:
             print('Set finished in {}%'.format(100 * i / set_size))
         p1, p2, label = get_random_pair(folderName, patch_size)
         p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
         p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
         pairs += [[p1, p2]]
         labels += [label]
-    apairs = np.array(pairs)
+    apairs = np.array(pairs, dtype=object)
     print(apairs.shape)
     alabels = np.array(labels)
     return apairs, alabels
