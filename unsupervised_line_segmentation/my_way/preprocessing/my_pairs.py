@@ -2,9 +2,7 @@ import os
 import numpy as np
 import cv2
 from typing import List, Tuple
-import unsupervised_line_segmentation.my_way.preprocessing.pairs_testing as pair_test
 import itertools
-
 import time
 
 MARGIN = 20
@@ -13,8 +11,12 @@ TIMEOUT = 20
 
 def get_position(img: np.ndarray, patch_size: int) -> Tuple:
     """Find random position for patches within acceptable location"""
-    pos = [np.random.randint(low=0 + MARGIN, high=img.shape[0] - patch_size - MARGIN),
-           np.random.randint(low=0 + MARGIN, high=img.shape[1] - 2 * patch_size - MARGIN)
+    assert patch_size * 2 < img.shape[
+        0], "Patch size to big, img vertical size is {}, while proposed patch {}. Reuce patch size".format(
+        img.shape[0], patch_size)
+    assert patch_size < img.shape[1], "Width of patch is to big"
+    pos = [np.random.randint(low=0 + MARGIN, high=img.shape[0] - 2 * patch_size - MARGIN),
+           np.random.randint(low=0 + MARGIN, high=img.shape[1] - patch_size - MARGIN)
            ]
     p1_pos = pos
     p2_pos = [pos[0] + patch_size, pos[1]]
@@ -25,8 +27,12 @@ def evaluate_s(p1: np.ndarray, p2: np.ndarray) -> float:
     """Based on two patches evaluate s value"""
     pixels1 = cv2.countNonZero(p1)
     pixels2 = cv2.countNonZero(p2)
-    s = min(pixels1, pixels2) / max(pixels1, pixels2)
-    return s
+    if pixels1 != 0 or pixels2 != 0:
+        s = min(pixels1, pixels2) / max(pixels1, pixels2)
+        return s
+    else:
+        return 1
+
 
 
 def get_patches(img: np.ndarray, patch_size: int) -> Tuple:
@@ -93,8 +99,8 @@ def get_random_pair(images_path, patch_size):
     img = cv2.imread(os.path.join(images_path, image_name), 0)
 
     # there are 3 possibilites on patches generation.
-    # Patches Similiar by number of froeground pixels (s > 0.7)
-    # Patches difrent by number of foreground pixels (s < 0.4)
+    # Patches Similiar by number of froeground pixels (s > 0.99)
+    # Patches difrent by number of foreground pixels (s < 0.99)
     # Patches different by background area (nb of white > nb of black pixels)
 
     gen_func = np.random.choice([get_patches_similar_by_number_of_foreground_pixels,
@@ -109,10 +115,10 @@ def get_random_pair(images_path, patch_size):
 def unsupervised_loaddata(folderName, set_size, patch_size):
     pairs = []
     labels = []
-    percent = set_size/100
+    percent = set_size / 100
     for i in range(set_size):
-        if i % percent  == 0:
-            print('Set finished in {}%'.format(100 * i / set_size))
+        # if i % percent  == 0:
+        #     print('Set finished in {}%'.format(100 * i / set_size))
         p1, p2, label = get_random_pair(folderName, patch_size)
         p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
         p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)

@@ -9,22 +9,22 @@ import matplotlib.pyplot as plt
 Args = arguments.parse_args()
 input_shape = (Args.input_shape, Args.input_shape, 1)
 
-train_pair, train_label = my_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size,Args.input_shape)
-plt.hist(train_label)
-plt.show()
-#
-# if Args.train == True:
-#     # prepare data
-#     # TODO prepare train and test data
-#     train_pair, train_label = my_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size,Args.input_shape)
-#     val_pair, val_label = my_pairs.unsupervised_loaddata(Args.validation_set_path, Args.validation_set_path,Args.input_shape)
+# train_pair, train_label = my_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size,Args.input_shape)
+# plt.hist(train_label)
+# plt.show()
+
+if Args.train == True:
+    # prepare data
+    # TODO prepare train and test data
+    train_pair, train_label = my_pairs.unsupervised_loaddata(Args.train_set_path, Args.train_set_size,Args.input_shape)
+#     val_pair, val_label = my_pairs.unsupervised_loaddata(Args.validation_set_path, Args.validation_set_size,Args.input_shape)
 #     if Args.continue_from_best is True:
 #         assert Args.path_to_model is not None, "invalid path to model"
 #         model = keras.models.load_model(Args.path_to_model)
 #     else:
 #         model = model_op.built_model(input_shape=input_shape)
 #     model, history = model_op.fit_model(model, path_to_model=Args.path_to_model,
-#                                         train_pairs=train_pair,
+#                                        train_pairs=train_pair,
 #                                         train_label=train_label,
 #                                         batch_size=Args.batch_size, epochs=Args.epochs,
 #                                         val_pairs=val_pair,

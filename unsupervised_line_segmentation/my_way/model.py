@@ -3,7 +3,7 @@ import random
 from keras.layers import Input, Flatten, Dense, Dropout, Lambda, merge, Activation
 from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger, \
     LearningRateScheduler, TensorBoard
-from keras.optimizers import Adam, SGD, RMSprop
+from keras.optimizers import Adam
 import os
 from keras.models import Model, load_model, Sequential
 from keras.layers.merge import concatenate
@@ -51,6 +51,7 @@ def built_model(input_shape):
     fc9 = Dense(1, activation='sigmoid')(fc8)
     model = Model([input_a, input_b], fc9)
     model.summary()
+    return model
 
 
 def exponential_decay(lr0, s):
@@ -77,7 +78,8 @@ def fit_model(model, path_to_model, train_pairs, train_label, batch_size, epochs
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
     lr_scheduler = LearningRateScheduler(exponential_decay_fn)
-    model.compile(loss='binary_crossentropy', optimizer=Adam, metrics=['accuracy'])
+    adam = Adam(lr=learning_rate)
+    model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
     history = model.fit([train_pairs[:, 0], train_pairs[:, 1]], train_label,
                         batch_size=batch_size,
                         epochs=epochs,
