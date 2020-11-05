@@ -15,8 +15,8 @@ from keras import backend as K
 from keras.regularizers import l2
 from random import shuffle
 import datetime
-from tensorboard import program
-
+# from tensorboard import program
+import h5py
 
 def create_base_model(input_dim):
     """Create model first part based on input dimensions size"""
@@ -63,20 +63,17 @@ def exponential_decay(lr0, s):
 
 def fit_model(model, path_to_model, train_pairs, train_label, batch_size, epochs, val_pairs,
               val_label,
-              learning_rate, track_address=os.path.join(os.getcwd(), 'tensorboard')):
+              learning_rate):
     """Fit the model"""
 
-    tb = program.TensorBoard()
-    tb.configure(argv=[None, '--logdir', track_address])
-    url = tb.launch()
 
-    mcp = ModelCheckpoint(path_to_model, monitor='val_acc', verbose=1, save_best_only=True,
+    mcp = ModelCheckpoint(os.path.join(path_to_model,'bestmodel.h5py'), monitor='val_accuracy', verbose=1,
+                          save_best_only=True,
                           mode='max')
-    logs = CSVLogger(os.path.join(path_to_model, 'logs/fit/log'))
+    logs = CSVLogger('learned_model/log')
 
     exponential_decay_fn = exponential_decay(lr0=learning_rate, s=20)
-    log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
+
     lr_scheduler = LearningRateScheduler(exponential_decay_fn)
     adam = Adam(lr=learning_rate)
     model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
@@ -84,7 +81,7 @@ def fit_model(model, path_to_model, train_pairs, train_label, batch_size, epochs
                         batch_size=batch_size,
                         epochs=epochs,
                         validation_data=([val_pairs[:, 0], val_pairs[:, 1]], val_label),
-                        callbacks=[mcp, logs, lr_scheduler, tensorboard_callback])
+                        callbacks=[logs, mcp, lr_scheduler])
     del model
-    model = load_model(path_to_model)
+    model = load_model(os.path.join(path_to_model,'bestmodel.h5py'))
     return model, history

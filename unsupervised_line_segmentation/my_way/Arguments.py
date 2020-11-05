@@ -25,7 +25,7 @@ def parse_args() -> Arguments:
     parser.add_argument('--CUDA_nb', dest='CUDA_nb', type=str, help='Number of CUDA devices',
                         default='0', required=False)
     parser.add_argument('--input_shape', dest='input_shape', help='Patch size of input images',
-                        default=130, required=False)
+                        default=20, required=False)
     parser.add_argument('--train_set_path', dest='train_set_path', type=str,
                         help='Path to the directory containing images', required=False,
                         default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\train')
