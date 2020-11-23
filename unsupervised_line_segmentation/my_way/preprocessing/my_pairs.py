@@ -128,3 +128,14 @@ def unsupervised_loaddata(folderName, set_size, patch_size):
     print(apairs.shape)
     alabels = np.array(labels)
     return apairs, alabels
+
+def prepare_dataset(folderName, set_size, patch_size,path_to_save: str):
+    percent = set_size / 100
+    for i in range(set_size):
+        if i % percent  == 0:
+            print('Set finished in {}%'.format(100 * i / set_size))
+        p1, p2, label = get_random_pair(folderName, patch_size)
+        p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
+        p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
+        cv2.imwrite(os.path.join(path_to_save, "patch_{}_0_{}.png".format(i, label)), p1)
+        cv2.imwrite(os.path.join(path_to_save, "patch_{}_1_{}.png".format(i, label)), p2)

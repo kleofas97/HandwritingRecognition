@@ -25,22 +25,22 @@ def parse_args() -> Arguments:
     parser.add_argument('--CUDA_nb', dest='CUDA_nb', type=str, help='Number of CUDA devices',
                         default='0', required=False)
     parser.add_argument('--input_shape', dest='input_shape', help='Patch size of input images',
-                        default=20, required=False)
+                        default=128, required=False)
     parser.add_argument('--train_set_path', dest='train_set_path', type=str,
                         help='Path to the directory containing images', required=False,
                         default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\train')
     parser.add_argument('--train_set_size', dest='train_set_size', type=str,
-                        help='number of patches to be prepared', default=100, required=False)
+                        help='number of patches to be prepared', default=10, required=False)
     parser.add_argument('--validation_set_path', dest='validation_set_path', type=str,
                         help='Path to the directory containing images for testing', required=False,
                         default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\val')
     parser.add_argument('--validation_set_size', dest='validation_set_size', type=int,
                         help='number of patches to be prepared for validation', required=False,
-                        default=100)
+                        default=2)
     parser.add_argument('--learning_rate', dest='learning_rate', type=float,
                         help='Starting learning rate', default=0.001, required=False)
     parser.add_argument('--epochs', dest='epochs', type=int, default=100, required=False)
-    parser.add_argument('--batch_size', dest='batch_size', type=int, default=32, required=False)
+    parser.add_argument('--batch_size', dest='batch_size', type=int, default=8, required=False)
     parser.add_argument('--train', dest='train', type=bool,
                         help='If model is to be trained or just to predict', default=True,
                         required=False)

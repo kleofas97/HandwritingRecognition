@@ -1,22 +1,59 @@
 import numpy as np
 import random
-from keras.layers import Input, Flatten, Dense, Dropout, Lambda, merge, Activation
-from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, CSVLogger, \
-    LearningRateScheduler, TensorBoard
+from keras.layers import Input, Flatten, Dense, Dropout
+from keras.callbacks import ModelCheckpoint, CSVLogger, LearningRateScheduler
 from keras.optimizers import Adam
 import os
-from keras.models import Model, load_model, Sequential
+from keras.models import Model, load_model
 from keras.layers.merge import concatenate
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
-from sklearn.metrics import accuracy_score as accuracy
 import cv2
-from keras import backend as K
-from keras.regularizers import l2
-from random import shuffle
-import datetime
-# from tensorboard import program
-import h5py
+import re
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+
+def genereate_batch(path_1, path_2, batch_size):
+    """Generate batch of images from two files, where name corresponds to each other. Label is the last number in the name of the picture"""
+    X = []
+    labels = []
+    dir_list_X1 = os.listdir(path_1)
+    dir_list_X1.sort(key=natural_keys)
+    dir_list_X2 = os.listdir(path_2)
+    dir_list_X2.sort(key=natural_keys)
+    batch_count = 0
+    while True:
+        for imgp in dir_list_X1:
+            label = imgp[-5]  # eg. "SampleNb_1.png, that is why [-5] is "1"
+            p1 = cv2.imread(os.path.join(path_1, imgp))
+            p1 = cv2.cvtColor(p1, cv2.COLOR_BGR2GRAY)
+            p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
+            p2 = cv2.imread(os.path.join(path_2, imgp))
+            p2 = cv2.cvtColor(p2, cv2.COLOR_BGR2GRAY)
+            p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
+            X += [[p1, p2]]
+            labels += [label]
+            batch_count += 1
+            if batch_count > batch_size - 1:
+                apairs = np.array(X, dtype=object)
+                alabels = np.array(labels)
+                yield [apairs[:, 0], apairs[:, 1]], alabels
+                X.clear()
+                labels.clear()
+                batch_count = 0
+
 
 def create_base_model(input_dim):
     """Create model first part based on input dimensions size"""
@@ -61,13 +98,12 @@ def exponential_decay(lr0, s):
     return exponential_decay_fn
 
 
-def fit_model(model, path_to_model, train_pairs, train_label, batch_size, epochs, val_pairs,
-              val_label,
+def fit_model(model, path_to_model, generator_train, train_steps, generator_val, val_steps, epochs,
               learning_rate):
     """Fit the model"""
 
-
-    mcp = ModelCheckpoint(os.path.join(path_to_model,'bestmodel.h5py'), monitor='val_accuracy', verbose=1,
+    mcp = ModelCheckpoint(os.path.join(path_to_model, 'bestmodel.h5py'), monitor='val_accuracy',
+                          verbose=1,
                           save_best_only=True,
                           mode='max')
     logs = CSVLogger('learned_model/log')
@@ -77,11 +113,12 @@ def fit_model(model, path_to_model, train_pairs, train_label, batch_size, epochs
     lr_scheduler = LearningRateScheduler(exponential_decay_fn)
     adam = Adam(lr=learning_rate)
     model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
-    history = model.fit([train_pairs[:, 0], train_pairs[:, 1]], train_label,
-                        batch_size=batch_size,
+    history = model.fit(generator_train,
+                        steps_per_epoch=train_steps,
                         epochs=epochs,
-                        validation_data=([val_pairs[:, 0], val_pairs[:, 1]], val_label),
+                        validation_data=generator_val,
+                        validation_steps=val_steps, shuffle=False,
                         callbacks=[logs, mcp, lr_scheduler])
     del model
-    model = load_model(os.path.join(path_to_model,'bestmodel.h5py'))
+    model = load_model(os.path.join(path_to_model, 'bestmodel.h5py'))
     return model, history

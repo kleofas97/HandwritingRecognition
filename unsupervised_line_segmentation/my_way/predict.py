@@ -5,6 +5,7 @@ import numpy as np
 
 import os
 from keras.models import Model, load_model, Sequential
+from sklearn.decomposition import PCA
 
 import cv2
 SLIDING_WINDOW_SIZE = 20
@@ -25,24 +26,17 @@ def get_intensity_value(value, min_val, max_val):
 
 
 
-def predict(version,path_to_read,path_to_save,patch_size):
+def predict(path_to_model,path_to_read,path_to_save,patch_size):
     outersize = 200
     # trimsize = 90
     trimsize = (patch_size - SLIDING_WINDOW_SIZE)/2
-    model = load_model('bestmodel' + version)
-    pages = 'complex_test'
-    predict_folder = "output_" + version + "_" + str(SLIDING_WINDOW_SIZE)
-    test_folder = 'complex_test'
+    model = load_model(path_to_model)
     output_layer = 2
     model = model.layers[output_layer]
 
-    os.makedirs(predict_folder, exist_ok=True)
-    os.makedirs(os.path.join(predict_folder, 'cv2_vis1'), exist_ok=True)
-    os.makedirs(os.path.join(predict_folder, 'cv2_vis2'), exist_ok=True)
-
     for imgp in os.listdir(path_to_read):
         print(imgp)
-        page = cv2.imread('{}/{}'.format(test_folder, imgp), 0)
+        page = cv2.imread('{}/{}'.format(path_to_read, imgp), 0)
         rows, cols = page.shape
         x = rows // SLIDING_WINDOW_SIZE
         y = cols // SLIDING_WINDOW_SIZE
@@ -62,6 +56,7 @@ def predict(version,path_to_read,path_to_save,patch_size):
 
                 predicted_img[i, j] = predicted_patch
 
+
         # pca = PCA(n_components=predicted_img.shape[2])
         #
         # features = predicted_img.reshape(-1, predicted_img.shape[2])
@@ -75,19 +70,20 @@ def predict(version,path_to_read,path_to_save,patch_size):
         #         get_intensity_value(pca_t_features[i, 2], pca_t_features[:, 2].min(),
         #                             pca_t_features[:, 2].max())]
         #        for i in range(pca_t_features.shape[0])]
-        #
+        # black_white = [[get_intensity_value(pca_t_features[i, 0], pca_t_features[:, 0].min(),
+        #                             pca_t_features[:, 0].max())]for i in range(pca_t_features.shape[0])]
         # rgb = np.asarray(rgb, dtype=np.uint8).reshape((*predicted_img.shape[:2], 3))
         # rgb_rows, rgb_cols, _ = rgb.shape
-        # result = np.zeros([rows, cols, 3])
+        # result = np.zeros([rows, cols])
         # for i in range(rgb_rows):
         #     for j in range(rgb_cols):
-        #         pixel_value = rgb[i, j, :]
+        #         pixel_value = rgb[i, j]
         #         result[i * SLIDING_WINDOW_SIZE:i *SLIDING_WINDOW_SIZE + SLIDING_WINDOW_SIZE,
-        #         j * SLIDING_WINDOW_SIZE:j * SLIDING_WINDOW_SIZE + SLIDING_WINDOW_SIZE, :] = pixel_value
+        #         j * SLIDING_WINDOW_SIZE:j * SLIDING_WINDOW_SIZE + SLIDING_WINDOW_SIZE] = pixel_value
         #
         # # big_rgb=cv2.resize(rgb,(page.shape[1]-pad_h,page.shape[0]-pad_w))
         # # org_rgb=np.zeros([page.shape[0],page.shape[1],3])
         # # org_rgb[:-pad_w,:-pad_h]=big_rgb
-
-
+        #
+        #
         # cv2.imwrite('{}/{}'.format(os.path.join(path_to_save, imgp), imgp), result)
