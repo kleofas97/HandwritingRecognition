@@ -19,16 +19,17 @@ class Arguments(NamedTuple):
     path_to_model: str
     # version: int
 
+#TODO after preparing a good way to have a nice dataet update necessary arguments
 
 def parse_args() -> Arguments:
     parser = argparse.ArgumentParser()
     parser.add_argument('--CUDA_nb', dest='CUDA_nb', type=str, help='Number of CUDA devices',
                         default='0', required=False)
     parser.add_argument('--input_shape', dest='input_shape', help='Patch size of input images',
-                        default=128, required=False)
+                        default=150, required=False)
     parser.add_argument('--train_set_path', dest='train_set_path', type=str,
                         help='Path to the directory containing images', required=False,
-                        default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\normalized\data\train')
+                        default=r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\grayscale_dataset')
     parser.add_argument('--train_set_size', dest='train_set_size', type=str,
                         help='number of patches to be prepared', default=10, required=False)
     parser.add_argument('--validation_set_path', dest='validation_set_path', type=str,
@@ -52,7 +53,7 @@ def parse_args() -> Arguments:
                         required=False)
     parser.add_argument('--path_to_model', dest='path_to_model', type=str,
                         help='path to model to be loaded (only if continue_from_best is true',
-                        required=False, default=str(os.path.join(os.getcwd(), 'learned_model')))
+                        required=False, default=str(os.path.join(os.getcwd(), 'learned_model_grayscale_150')))
     # parser.add_argument('--version',dest='version',type=int, help='version_number')
 
     return Arguments(**vars(parser.parse_args()))

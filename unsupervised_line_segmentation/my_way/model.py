@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from keras.layers import Input, Flatten, Dense, Dropout
-from keras.callbacks import ModelCheckpoint, CSVLogger, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping,ReduceLROnPlateau
 from keras.optimizers import Adam
 import os
 from keras.models import Model, load_model
@@ -38,11 +38,17 @@ def genereate_batch(path_1, path_2, batch_size):
         for imgp in dir_list_X1:
             label = imgp[-5]  # eg. "SampleNb_1.png, that is why [-5] is "1"
             p1 = cv2.imread(os.path.join(path_1, imgp))
+
             p1 = cv2.cvtColor(p1, cv2.COLOR_BGR2GRAY)
+            p1 = p1*(1./255.0)
             p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
+            p1 = p1.astype(np.float32)
             p2 = cv2.imread(os.path.join(path_2, imgp))
+
             p2 = cv2.cvtColor(p2, cv2.COLOR_BGR2GRAY)
+            p2 = p2 * (1. / 255.0)
             p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
+            p2 = p2.astype(np.float32)
             X += [[p1, p2]]
             labels += [label]
             batch_count += 1
@@ -99,18 +105,18 @@ def exponential_decay(lr0, s):
 
 
 def fit_model(model, path_to_model, generator_train, train_steps, generator_val, val_steps, epochs,
-              learning_rate):
+              learning_rate,patch_size):
     """Fit the model"""
-
-    mcp = ModelCheckpoint(os.path.join(path_to_model, 'bestmodel.h5py'), monitor='val_accuracy',
+    callbacks = [
+        EarlyStopping(patience=5, verbose=1),
+        ReduceLROnPlateau(patience=2, verbose=1,monitor='val_loss'),
+        ModelCheckpoint(os.path.join(path_to_model, str(patch_size) +'px_bestmodel.h5py'), monitor='val_loss',
                           verbose=1,
                           save_best_only=True,
-                          mode='max')
-    logs = CSVLogger('learned_model/log')
+                          mode='max'),
+        CSVLogger('learned_model/log')
+    ]
 
-    exponential_decay_fn = exponential_decay(lr0=learning_rate, s=20)
-
-    lr_scheduler = LearningRateScheduler(exponential_decay_fn)
     adam = Adam(lr=learning_rate)
     model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
     history = model.fit(generator_train,
@@ -118,7 +124,7 @@ def fit_model(model, path_to_model, generator_train, train_steps, generator_val,
                         epochs=epochs,
                         validation_data=generator_val,
                         validation_steps=val_steps, shuffle=False,
-                        callbacks=[logs, mcp, lr_scheduler])
+                        callbacks=callbacks)
     del model
-    model = load_model(os.path.join(path_to_model, 'bestmodel.h5py'))
+    model = load_model(os.path.join(path_to_model, str(patch_size) +'px_bestmodel.h5py'))
     return model, history
