@@ -95,7 +95,7 @@ def fit_model(model, path_to_model: str, generator_train: Tuple, train_steps: in
                         verbose=1,
                         save_best_only=True,
                         mode='min'),
-        CSVLogger('learned_model/log')
+        CSVLogger(os.path.join(path_to_model,'log'))
     ]
 
     adam = Adam(lr=learning_rate)
