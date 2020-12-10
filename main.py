@@ -7,26 +7,28 @@ import Arguments
 
 Args = Arguments.parse_args()
 if Args.prepare_dataset:
-    pairs.prepare_dataset_on_disk(dataset_path_train=Args.data_train_dir,
-                                  dataset_path_val=Args.data_val_dir,
-                                  path_to_output=Args.dataset_path,
+    pairs.prepare_dataset_on_disk(dataset_path_train=os.path.join(Args.dataset_path, "train"),
+                                  dataset_path_val=os.path.join(Args.dataset_path, "val"),
+                                  path_to_output=Args.dataset_prep_dir,
                                   train_set_size=Args.train_set_size,
                                   val_set_size=Args.validation_set_size,
                                   patch_size=Args.input_shape)
-nb_of_samples_train = len(os.listdir(os.path.join(Args.data_train_dir, 'train_0')))
-nb_of_samples_val = len(os.path.join(Args.data_val_dir, 'val_0'))
+nb_of_samples_train = len(os.listdir(os.path.join(Args.dataset_prep_dir, 'train', 'train_0')))
+nb_of_samples_val = len(os.path.join(Args.dataset_prep_dir, 'val', 'val_0'))
 train_steps = np.floor(nb_of_samples_train / Args.batch_size)
 val_steps = np.floor(nb_of_samples_val / Args.batch_size)
 input_shape = (Args.input_shape, Args.input_shape, 1)
 print(nb_of_samples_train)
 if Args.train == True:
     # prepare data
-    generator_train = model_op.genereate_batch(path_1=os.path.join(Args.data_train_dir, 'train_0'),
-                                               path_2=os.path.join(Args.data_train_dir, 'train_1'),
-                                               batch_size=Args.batch_size)
-    generator_val = model_op.genereate_batch(path_1=os.path.join(Args.data_val_dir, 'val_0'),
-                                             path_2=os.path.join(Args.data_val_dir, 'val_1'),
-                                             batch_size=Args.batch_size)
+    generator_train = model_op.genereate_batch(
+        path_1=os.path.join(Args.dataset_prep_dir, 'train', 'train_0'),
+        path_2=os.path.join(Args.dataset_prep_dir, 'train', 'train_0'),
+        batch_size=Args.batch_size)
+    generator_val = model_op.genereate_batch(
+        path_1=os.path.join(Args.dataset_prep_dir, 'val', 'val_0'),
+        path_2=os.path.join(Args.dataset_prep_dir, 'val', 'val_1'),
+        batch_size=Args.batch_size)
     if Args.continue_from_best is True:
         assert Args.path_to_model is not None, "invalid path to model"
         model = keras.models.load_model(Args.path_to_model)
@@ -41,6 +43,6 @@ if Args.train == True:
 else:
     model = keras.models.load_model(Args.path_to_model)
     # TODO prepare way to prepare image as input
-# PART II WORD RECOGNITION - AT THIS TIME WE SHOULD HAVE READY CUTTED IMAGES WITH SEGMENTED TEXT LINES
+    # PART II WORD RECOGNITION - AT THIS TIME WE SHOULD HAVE READY CUTTED IMAGES WITH SEGMENTED TEXT LINES
     prediction = model.predict(Args.test_img_path)
     # TODO cut images to lines for next DNN
