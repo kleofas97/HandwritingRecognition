@@ -18,7 +18,7 @@ nb_of_samples_val = len(os.path.join(Args.data_val_dir, 'val_0'))
 train_steps = np.floor(nb_of_samples_train / Args.batch_size)
 val_steps = np.floor(nb_of_samples_val / Args.batch_size)
 input_shape = (Args.input_shape, Args.input_shape, 1)
-
+print(nb_of_samples_train)
 if Args.train == True:
     # prepare data
     generator_train = model_op.genereate_batch(path_1=os.path.join(Args.data_train_dir, 'train_0'),
