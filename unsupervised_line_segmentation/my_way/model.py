@@ -1,7 +1,7 @@
 import numpy as np
-import random
+from typing import Tuple
 from keras.layers import Input, Flatten, Dense, Dropout
-from keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping,ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, ReduceLROnPlateau
 from keras.optimizers import Adam
 import os
 from keras.models import Model, load_model
@@ -9,38 +9,24 @@ from keras.layers.merge import concatenate
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
 import cv2
-import re
 
 
-def atoi(text):
-    return int(text) if text.isdigit() else text
-
-
-def natural_keys(text):
-    '''
-    alist.sort(key=natural_keys) sorts in human order
-    http://nedbatchelder.com/blog/200712/human_sorting.html
-    (See Toothy's implementation in the comments)
-    '''
-    return [atoi(c) for c in re.split(r'(\d+)', text)]
-
-
-def genereate_batch(path_1, path_2, batch_size):
+def genereate_batch(path_1: str, path_2: str, batch_size: int) -> Tuple:
     """Generate batch of images from two files, where name corresponds to each other. Label is the last number in the name of the picture"""
-    X = []
+    x = []
     labels = []
-    dir_list_X1 = os.listdir(path_1)
-    dir_list_X1.sort(key=natural_keys)
-    dir_list_X2 = os.listdir(path_2)
-    dir_list_X2.sort(key=natural_keys)
+    dir_list_x1 = os.listdir(path_1)
+    # dir_list_X1.sort(key=natural_keys)
+    # dir_list_X2 = os.listdir(path_2)
+    # dir_list_X2.sort(key=natural_keys)
     batch_count = 0
     while True:
-        for imgp in dir_list_X1:
+        for imgp in dir_list_x1:
             label = imgp[-5]  # eg. "SampleNb_1.png, that is why [-5] is "1"
             p1 = cv2.imread(os.path.join(path_1, imgp))
 
             p1 = cv2.cvtColor(p1, cv2.COLOR_BGR2GRAY)
-            p1 = p1*(1./255.0)
+            p1 = p1 * (1. / 255.0)
             p1 = p1.reshape(p1.shape[0], p1.shape[1], 1)
             p1 = p1.astype(np.float32)
             p2 = cv2.imread(os.path.join(path_2, imgp))
@@ -49,14 +35,14 @@ def genereate_batch(path_1, path_2, batch_size):
             p2 = p2 * (1. / 255.0)
             p2 = p2.reshape(p2.shape[0], p2.shape[1], 1)
             p2 = p2.astype(np.float32)
-            X += [[p1, p2]]
+            x += [[p1, p2]]
             labels += [label]
             batch_count += 1
             if batch_count > batch_size - 1:
-                apairs = np.array(X, dtype=object)
+                apairs = np.array(x, dtype=object)
                 alabels = np.array(labels)
                 yield [apairs[:, 0], apairs[:, 1]], alabels
-                X.clear()
+                x.clear()
                 labels.clear()
                 batch_count = 0
 
@@ -97,23 +83,18 @@ def built_model(input_shape):
     return model
 
 
-def exponential_decay(lr0, s):
-    def exponential_decay_fn(epoch):
-        return lr0 * 0.1 ** (epoch / s)
-
-    return exponential_decay_fn
-
-
-def fit_model(model, path_to_model, generator_train, train_steps, generator_val, val_steps, epochs,
-              learning_rate,patch_size):
+def fit_model(model, path_to_model: str, generator_train: Tuple, train_steps: int,
+              generator_val: Tuple, val_steps: int, epochs: int,
+              learning_rate: float, patch_size: int):
     """Fit the model"""
     callbacks = [
         EarlyStopping(patience=5, verbose=1),
-        ReduceLROnPlateau(patience=2, verbose=1,monitor='val_loss'),
-        ModelCheckpoint(os.path.join(path_to_model, str(patch_size) +'px_bestmodel.h5py'), monitor='val_loss',
-                          verbose=1,
-                          save_best_only=True,
-                          mode='max'),
+        ReduceLROnPlateau(patience=1, verbose=1, monitor='val_loss'),
+        ModelCheckpoint(os.path.join(path_to_model, str(patch_size) + 'px_bestmodel.h5py'),
+                        monitor='val_loss',
+                        verbose=1,
+                        save_best_only=True,
+                        mode='min'),
         CSVLogger('learned_model/log')
     ]
 
@@ -126,5 +107,5 @@ def fit_model(model, path_to_model, generator_train, train_steps, generator_val,
                         validation_steps=val_steps, shuffle=False,
                         callbacks=callbacks)
     del model
-    model = load_model(os.path.join(path_to_model, str(patch_size) +'px_bestmodel.h5py'))
+    model = load_model(os.path.join(path_to_model, str(patch_size) + 'px_bestmodel.h5py'))
     return model, history

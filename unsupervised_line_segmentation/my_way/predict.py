@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
 import os
-# from keras.models import load_model
-# from sklearn.decomposition import PCA
+from keras.models import load_model
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from keras import backend as K
 import matplotlib
@@ -29,10 +29,10 @@ def get_intensity_value(value, min_val, max_val):
 
 
 def pca():
-    outersize = 128
-    trimsize = 20
+    outersize = 150
+    trimsize = 65
     innersize = outersize - 2 * trimsize
-    model = load_model(r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\learned_model_grayscale\bestmodel.h5py')
+    model = load_model(r'F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\learned_model_grayscale_150\150px_bestmodel.h5py')
     # pages = 'complex_test'
     predict_folder = os.path.join(os.getcwd(),"test_folder","output",str(trimsize))
     test_folder = os.path.join(os.getcwd(),"test_folder","input")
@@ -145,14 +145,14 @@ def post_production():
 
 
 if __name__ == "__main__":
-    # pca()
-    path = r"F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\test_folder\output\54\cv2_vis2\a01-014u.png"
-    I = cv2.imread(path,0)
-    # cv2.imshow("test",I)
+    pca()
+    # path = r"F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\test_folder\output\54\cv2_vis2\a01-014u.png"
+    # I = cv2.imread(path,0)
+    # # cv2.imshow("test",I)
+    # # cv2.waitKey()
+    # # cv2.destroyAllWindows()
+    # ret, thresh = cv2.threshold(I, 84, 255, cv2.THRESH_BINARY_INV )
+    # thresh = cv2.resize(thresh,(int(thresh.shape[1]/2),int(thresh.shape[0]/2)))
+    # cv2.imshow("test",thresh)
     # cv2.waitKey()
     # cv2.destroyAllWindows()
-    ret, thresh = cv2.threshold(I, 84, 255, cv2.THRESH_BINARY_INV )
-    thresh = cv2.resize(thresh,(int(thresh.shape[1]/2),int(thresh.shape[0]/2)))
-    cv2.imshow("test",thresh)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
