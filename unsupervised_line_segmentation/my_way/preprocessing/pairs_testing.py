@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from typing import List
 import matplotlib.pyplot as plt
-import unsupervised_line_segmentation.my_way.preprocessing.my_pairs as my_pairs
+import Unsupervised_line_segmentation_siamese_dnn.my_way.preprocessing.my_pairs as my_pairs
 
 """Module for testing staff in terms of patch generation.
     use:
@@ -20,8 +20,8 @@ def test_patches_generation(img_in: np.ndarray, p1_pos: List, p2_pos: List,
     pkt2 = (p1_pos[1] + patch_size, p1_pos[0] + patch_size)
     pkt3 = (p2_pos[1], p2_pos[0])
     pkt4 = (p2_pos[1] + patch_size, p2_pos[0] + patch_size)
-    cv2.rectangle(img, pkt1, pkt2, (0, 0, 255))
-    cv2.rectangle(img, pkt3, pkt4, (0, 0, 255))
+    cv2.rectangle(img, pkt1, pkt2, (0, 0, 0),thickness=3)
+    cv2.rectangle(img, pkt3, pkt4, (0, 0, 0),thickness=3)
 
     scale_percent = 50  # percent of original size
     width = int(img.shape[1] * scale_percent / 100)
@@ -66,3 +66,6 @@ def show_generated_patch(images_path: str, patch_size: int) -> None:
     img = cv2.imread(os.path.join(images_path, image_name), 0)
     p1_pos, p2_pos = my_pairs.get_position(img, patch_size)
     test_patches_generation(img, p1_pos, p2_pos, patch_size)
+
+if __name__ == "__main__":
+    show_generated_patch(images_path=r"F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\data\cutted_pages\part1",patch_size=100)

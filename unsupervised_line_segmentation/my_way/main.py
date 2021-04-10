@@ -3,7 +3,7 @@ import keras
 import os
 import numpy as np
 import unsupervised_line_segmentation.my_way.preprocessing.my_pairs as pairs
-import Arguments
+from unsupervised_line_segmentation.my_way import Arguments
 
 Args = Arguments.parse_args()
 if Args.prepare_dataset:
@@ -20,10 +20,10 @@ val_steps = np.floor(nb_of_samples_val / Args.batch_size)
 input_shape = (Args.input_shape, Args.input_shape, 1)
 print(nb_of_samples_train)
 if Args.train == True:
-    # prepare data
+    # prepare generators
     generator_train = model_op.genereate_batch(
         path_1=os.path.join(Args.dataset_prep_dir, 'train', 'train_0'),
-        path_2=os.path.join(Args.dataset_prep_dir, 'train', 'train_0'),
+        path_2=os.path.join(Args.dataset_prep_dir, 'train', 'train_1'),
         batch_size=Args.batch_size)
     generator_val = model_op.genereate_batch(
         path_1=os.path.join(Args.dataset_prep_dir, 'val', 'val_0'),
@@ -42,7 +42,5 @@ if Args.train == True:
                                         val_steps=val_steps, patch_size=Args.input_shape)
 else:
     model = keras.models.load_model(Args.path_to_model)
-    # TODO prepare way to prepare image as input
-    # PART II WORD RECOGNITION - AT THIS TIME WE SHOULD HAVE READY CUTTED IMAGES WITH SEGMENTED TEXT LINES
     prediction = model.predict(Args.test_img_path)
-    # TODO cut images to lines for next DNN
+

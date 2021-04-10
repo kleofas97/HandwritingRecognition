@@ -4,10 +4,10 @@ import cv2
 from typing import Tuple
 import itertools
 import time
-
+import Unsupervised_line_segmentation_siamese_dnn.my_way.preprocessing.pairs_testing as tests
 MARGIN = 20
 TIMEOUT = 5
-S_THRESHOLD = 0.95
+S_THRESHOLD = 0.85
 """My pairs module is provided for preparing a dataset of patches for model to learn.
     It may prepare and save a dataset with function: prepare_dataset_on_disk;
     or load it into directly into the memory with function: prepare_dataset_in_memory. 
@@ -145,7 +145,7 @@ def get_patches_similar_by_number_of_foreground_pixels(img: np.ndarray,
     for _ in itertools.count():
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         s = evaluate_s(p1, p2)
-        if s >= S_THRESHOLD+0.02:  # This might have to be improved
+        if s >= S_THRESHOLD+0.1:  # This might have to be improved
             label = 0
             return p1, p2, label
         else:
@@ -163,7 +163,7 @@ def get_patches_different_by_number_of_foreground_pixels(img: np.ndarray,
     for _ in itertools.count():
         p1, p2 = get_patches(img=img, patch_size=patch_size)
         s = evaluate_s(p1, p2)
-        if s < S_THRESHOLD-0.02:  # This might have to be improved
+        if s < S_THRESHOLD-0.1:  # This might have to be improved
             label = 1
             return p1, p2, label
         else:
@@ -234,3 +234,8 @@ def make_dirs(train_path: str, val_path: str) -> None:
         os.mkdir(os.path.join(train_path, "train_0"))
     if os.path.isdir(os.path.join(train_path, "train_1")) is False:
         os.mkdir(os.path.join(train_path, "train_1"))
+
+if __name__ =="__main__":
+    tests.show_generated_patch(
+            images_path=r"F:\Studia\pythonProject\unsupervised_line_segmentation\my_way\data\cutted_pages\part1",
+            patch_size=100)
